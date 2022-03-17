@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import shutil
+import atexit
 import argparse
 import codecs
 import os.path
@@ -7,6 +9,10 @@ import platform
 import shutil
 import sys
 import webbrowser as wb
+from functools import partial
+import requests
+import tempfile
+from pathlib import Path
 from functools import partial
 
 try:
@@ -46,9 +52,16 @@ from libs.create_ml_io import CreateMLReader
 from libs.create_ml_io import JSON_EXT
 from libs.ustr import ustr
 from libs.hashableQListWidgetItem import HashableQListWidgetItem
+from thread_worker import Worker, WorkerSignals
 
 __appname__ = 'labelImg'
 
+temp_dir = tempfile.mkdtemp(prefix=__appname__ + '-', suffix='-tmp')
+temp_annotation_dir = tempfile.mkdtemp(prefix=__appname__ + 'annotations-', suffix='-tmp')
+print(temp_dir)
+print(temp_annotation_dir)
+atexit.register(lambda: shutil.rmtree(temp_dir))
+atexit.register(partial(shutil.rmtree, temp_annotation_dir))
 
 class WindowMixin(object):
 
@@ -80,6 +93,8 @@ class MainWindow(QMainWindow, WindowMixin):
         self.settings = Settings()
         self.settings.load()
         settings = self.settings
+        self.temp_dir = temp_dir
+        self.temp_annotation_dir = temp_annotation_dir
 
         self.os_name = platform.system()
 
@@ -217,7 +232,7 @@ class MainWindow(QMainWindow, WindowMixin):
         open = action(get_str('openFile'), self.open_file,
                       'Ctrl+O', 'open', get_str('openFileDetail'))
 
-        open_dir = action(get_str('openDir'), self.open_dir_dialog,
+        open_dir = action(get_str('openDir'), self.import_dir_images,
                           'Ctrl+u', 'open', get_str('openDir'))
 
         change_save_dir = action(get_str('changeSaveDir'), self.change_save_dir_dialog,
@@ -238,6 +253,8 @@ class MainWindow(QMainWindow, WindowMixin):
 
         save = action(get_str('save'), self.save_file,
                       'Ctrl+S', 'save', get_str('saveDetail'), enabled=False)
+
+        self.processed_images_id =  []
 
         def get_format_meta(format):
             """
@@ -732,12 +749,69 @@ class MainWindow(QMainWindow, WindowMixin):
             self.set_dirty()
             self.update_combo_box()
 
+    def create_temp_dir(self):
+        temp_dir = tempfile.mkdtemp(prefix=__appname__ + '-')
+        temp_dir = temp_dir
+        print('temp_dir:', temp_dir)
+        return temp_dir
+
+    def get_image_from_server(self, *args, **kwargs):
+        print("get_image_from_server")
+        args = list(args)
+        if len(args) == 1:
+            image_id = args[0]
+            if image_id in self.processed_images_id:
+                return self.get_file_by_name(image_id)
+            image = requests.get(self.image_url + "/" + str(image_id))
+            self.create_temp_file(image_id, image.content)
+            self.processed_images_id.append(image_id)
+            return image.content
+
+    def create_temp_file(self, image_id, data):
+        self.temp_dir = Path(self.temp_dir)
+        filename = self.m_img_list[image_id].split('/')[-1]
+        full_path = self.temp_dir / filename
+        with open(full_path, 'wb') as f:
+            f.write(data)
+
+    def get_file_by_name(self,image_id):
+        filename = self.m_img_list[image_id].split('/')[-1]
+        full_path = self.temp_dir / filename
+        with open(full_path, 'rb') as f:
+            file_content = f.read()
+            return file_content
+
+
+    def emitter_object(self, image_id):
+        self.emitter = Worker(self.get_image_from_server, image_id)
+        self.emitter.signals.result.connect(self.set_image_canvas)
+        self.threadpool = QThreadPool()
+        self.threadpool.start(self.emitter)
+
+    def set_image_canvas(self, content):
+        self.fill_canvas_with_image_bytes(content)
+
     # Tzutalin 20160906 : Add file list and dock to move faster
     def file_item_double_clicked(self, item=None):
         self.cur_img_idx = self.m_img_list.index(ustr(item.text()))
+        self.emitter_object(self.cur_img_idx)
+        #image = self.get_image_from_server(self.cur_img_idx)
         filename = self.m_img_list[self.cur_img_idx]
-        if filename:
-            self.load_file(filename)
+        #if filename:
+        #    self.load_file(filename)
+        #self.fill_canvas_with_image_bytes(image)
+
+    def fill_canvas_with_image_bytes(self, image):
+        self.reset_state()
+        self.image = QPixmap()
+        self.image.loadFromData(image)
+        # set qpix size
+        self.canvas.load_pixmap(self.image)
+        self.canvas.setEnabled(True)
+        self.adjust_scale(initial=True)
+        self.add_recent_file(self.file_path)
+        self.toggle_actions(True)
+
 
     # Add chris
     def button_state(self, item=None):
@@ -847,6 +921,7 @@ class MainWindow(QMainWindow, WindowMixin):
         self.combo_box.update_items(unique_text_list)
 
     def save_labels(self, annotation_file_path):
+        print("Saving labels to file: {}".format(annotation_file_path))
         annotation_file_path = ustr(annotation_file_path)
         if self.label_file is None:
             self.label_file = LabelFile()
@@ -1069,8 +1144,9 @@ class MainWindow(QMainWindow, WindowMixin):
                 file_widget_item = self.file_list_widget.item(index)
                 file_widget_item.setSelected(True)
             else:
-                self.file_list_widget.clear()
-                self.m_img_list.clear()
+                pass
+                #self.file_list_widget.clear()
+                #self.m_img_list.clear()
 
         if unicode_file_path and os.path.exists(unicode_file_path):
             if LabelFile.is_label_file(unicode_file_path):
@@ -1279,6 +1355,7 @@ class MainWindow(QMainWindow, WindowMixin):
             self.load_pascal_xml_by_filename(filename)
 
     def open_dir_dialog(self, _value=False, dir_path=None, silent=False):
+        return
         if not self.may_continue():
             return
 
@@ -1297,17 +1374,27 @@ class MainWindow(QMainWindow, WindowMixin):
         self.import_dir_images(target_dir_path)
 
     def import_dir_images(self, dir_path):
-        if not self.may_continue() or not dir_path:
-            return
+        self.image_url = "http://localhost:8000/images"
+        try:
+            get_image_list = requests.get(self.image_url)
+            self.image_dict = get_image_list.json()
+            self.m_img_list = list(self.image_dict.values())
+        except Exception as e:
+            print(e)
+            self.m_img_list = []
 
-        self.last_open_dir = dir_path
-        self.dir_name = dir_path
-        self.file_path = None
-        self.file_list_widget.clear()
-        self.m_img_list = self.scan_all_images(dir_path)
-        self.img_count = len(self.m_img_list)
-        self.open_next_image()
+        #if not self.may_continue() or not dir_path:
+        #    return
+
+        #self.last_open_dir = dir_path
+        #self.dir_name = dir_path
+        #self.file_path = None
+        #self.file_list_widget.clear()
+        #self.m_img_list = self.scan_all_images(dir_path)
+        #self.img_count = len(self.m_img_list)
+        #self.open_next_image()
         for imgPath in self.m_img_list:
+            #imgPath = imgPath.split('/')[-1]
             item = QListWidgetItem(imgPath)
             self.file_list_widget.addItem(item)
 
@@ -1331,6 +1418,7 @@ class MainWindow(QMainWindow, WindowMixin):
 
     def open_prev_image(self, _value=False):
         # Proceeding prev image without dialog if having any label
+        self.img_count = len(self.m_img_list)
         if self.auto_saving.isChecked():
             if self.default_save_dir is not None:
                 if self.dirty is True:
@@ -1339,51 +1427,49 @@ class MainWindow(QMainWindow, WindowMixin):
                 self.change_save_dir_dialog()
                 return
 
-        if not self.may_continue():
-            return
+        #if not self.may_continue():
+        #    return
 
         if self.img_count <= 0:
             return
 
-        if self.file_path is None:
-            return
+        #if self.file_path is None:
+        #    return
 
         if self.cur_img_idx - 1 >= 0:
             self.cur_img_idx -= 1
-            filename = self.m_img_list[self.cur_img_idx]
-            if filename:
-                self.load_file(filename)
+            self.emitter_object(self.cur_img_idx)
 
     def open_next_image(self, _value=False):
         # Proceeding next image without dialog if having any label
+        print("open_next_image")
         if self.auto_saving.isChecked():
             if self.default_save_dir is not None:
                 if self.dirty is True:
                     self.save_file()
-            else:
-                self.change_save_dir_dialog()
-                return
+        #    else:
+        #        self.change_save_dir_dialog()
+        #        return
 
-        if not self.may_continue():
-            return
+        #if not self.may_continue():
+        #    return
 
-        if self.img_count <= 0:
-            return
-        
-        if not self.m_img_list:
-            return
+        #if self.img_count <= 0:
+        #    return
+        #
+        #if not self.m_img_list:
+        #    return
 
-        filename = None
-        if self.file_path is None:
-            filename = self.m_img_list[0]
-            self.cur_img_idx = 0
-        else:
-            if self.cur_img_idx + 1 < self.img_count:
-                self.cur_img_idx += 1
-                filename = self.m_img_list[self.cur_img_idx]
+        #filename = None
+        #if self.file_path is None:
+        #    filename = self.m_img_list[0]
+        #    self.cur_img_idx = 0
+        #else:
+        self.img_count = len(self.m_img_list)
+        if self.cur_img_idx + 1 < self.img_count:
+            self.cur_img_idx += 1
+            self.emitter_object(self.cur_img_idx)
 
-        if filename:
-            self.load_file(filename)
 
     def open_file(self, _value=False):
         if not self.may_continue():
@@ -1400,19 +1486,24 @@ class MainWindow(QMainWindow, WindowMixin):
             self.load_file(filename)
 
     def save_file(self, _value=False):
-        if self.default_save_dir is not None and len(ustr(self.default_save_dir)):
-            if self.file_path:
-                image_file_name = os.path.basename(self.file_path)
-                saved_file_name = os.path.splitext(image_file_name)[0]
-                saved_path = os.path.join(ustr(self.default_save_dir), saved_file_name)
-                self._save_file(saved_path)
-        else:
-            image_file_dir = os.path.dirname(self.file_path)
-            image_file_name = os.path.basename(self.file_path)
-            saved_file_name = os.path.splitext(image_file_name)[0]
-            saved_path = os.path.join(image_file_dir, saved_file_name)
-            self._save_file(saved_path if self.label_file
-                            else self.save_file_dialog(remove_ext=False))
+        print("Save file")
+        image_name = self.m_img_list[self.cur_img_idx]
+        print("image_name: ", image_name)
+        #if self.default_save_dir is not None and len(ustr(self.default_save_dir)):
+        #    if self.file_path:
+        image_file_name = image_name.split('/')[-1]
+        saved_file_name = image_file_name.split('.')[0]
+        saved_path = Path(self.temp_annotation_dir) / saved_file_name
+        print("Saved path: ", saved_path)
+        self._save_file(saved_path)
+        #else:
+            #image_file_dir = os.path.dirname(self.file_path)
+            #image_file_name = os.path.basename(self.file_path)
+            #saved_file_name = os.path.splitext(image_file_name)[0]
+            #saved_path = os.path.join(image_file_dir, saved_file_name)
+            #print("Saved path: 2", saved_path)
+            #self._save_file(saved_path if self.label_file
+            #                else self.save_file_dialog(remove_ext=False))
 
     def save_file_as(self, _value=False):
         assert not self.image.isNull(), "cannot save empty image"
@@ -1613,14 +1704,15 @@ def read(filename, default=None):
         return default
 
 
-def get_main_app(argv=None):
+def get_main_app(app,argv=None):
     """
     Standard boilerplate Qt application code.
     Do everything but app.exec_() -- so that we can test the application in one thread
     """
     if not argv:
         argv = []
-    app = QApplication(argv)
+    #app = QApplication(argv)
+    app = app
     app.setApplicationName(__appname__)
     app.setWindowIcon(new_icon("app"))
     # Tzutalin 201705+: Accept extra agruments to change predefined class file
@@ -1644,10 +1736,9 @@ def get_main_app(argv=None):
     return app, win
 
 
-def main():
+def main(app):
     """construct main app and run it"""
-    app, _win = get_main_app(sys.argv)
-    return app.exec_()
+    app, _win = get_main_app(app,sys.argv)
 
 if __name__ == '__main__':
-    sys.exit(main())
+    main(QApplication(sys.argv))
