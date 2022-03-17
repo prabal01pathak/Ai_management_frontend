@@ -922,7 +922,8 @@ class MainWindow(QMainWindow, WindowMixin):
 
     def save_labels(self, annotation_file_path):
         print("Saving labels to file: {}".format(annotation_file_path))
-        annotation_file_path = ustr(annotation_file_path)
+        annotation_file_path = str(annotation_file_path)
+        print("annotation Path", str(annotation_file_path))
         if self.label_file is None:
             self.label_file = LabelFile()
             self.label_file.verified = self.canvas.verified
