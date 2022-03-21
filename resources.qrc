@@ -1,40 +1,327 @@
-<!DOCTYPE RCC><RCC version="1.0">
-<qresource>
-
-<file alias="help">resources/icons/help.png</file>
-<file alias="app">resources/icons/app.png</file>
-<file alias="expert">resources/icons/expert2.png</file>
-<file alias="done">resources/icons/done.png</file>
-<file alias="file">resources/icons/file.png</file>
-<file alias="labels">resources/icons/labels.png</file>
-<file alias="new">resources/icons/objects.png</file>
-<file alias="close">resources/icons/close.png</file>
-<file alias="fit-width">resources/icons/fit-width.png</file>
-<file alias="fit-window">resources/icons/fit-window.png</file>
-<file alias="undo">resources/icons/undo.png</file>
-<file alias="hide">resources/icons/eye.png</file>
-<file alias="quit">resources/icons/quit.png</file>
-<file alias="copy">resources/icons/copy.png</file>
-<file alias="edit">resources/icons/edit.png</file>
-<file alias="open">resources/icons/open.png</file>
-<file alias="save">resources/icons/save.png</file>
-<file alias="format_voc">resources/icons/format_voc.png</file>
-<file alias="format_yolo">resources/icons/format_yolo.png</file>
-<file alias="format_createml">resources/icons/format_createml.png</file>
-<file alias="save-as">resources/icons/save-as.png</file>
-<file alias="color">resources/icons/color.png</file>
-<file alias="color_line">resources/icons/color_line.png</file>
-<file alias="zoom">resources/icons/zoom.png</file>
-<file alias="zoom-in">resources/icons/zoom-in.png</file>
-<file alias="zoom-out">resources/icons/zoom-out.png</file>
-<file alias="delete">resources/icons/cancel.png</file>
-<file alias="next">resources/icons/next.png</file>
-<file alias="prev">resources/icons/prev.png</file>
-<file alias="resetall">resources/icons/resetall.png</file>
-<file alias="verify">resources/icons/verify.png</file>
-<file alias="strings">resources/strings/strings.properties</file>
-<file alias="strings-zh-TW">resources/strings/strings-zh-TW.properties</file>
-<file alias="strings-zh-CN">resources/strings/strings-zh-CN.properties</file>
-<file alias="strings-ja-JP">resources/strings/strings-ja-JP.properties</file>
-</qresource>
+<RCC>
+  <qresource>
+    <file alias="help">resources/icons/help.png</file>
+    <file alias="app">resources/icons/app.png</file>
+    <file alias="expert">resources/icons/expert2.png</file>
+    <file alias="done">resources/icons/done.png</file>
+    <file alias="file">resources/icons/file.png</file>
+    <file alias="labels">resources/icons/labels.png</file>
+    <file alias="new">resources/icons/objects.png</file>
+    <file alias="close">resources/icons/close.png</file>
+    <file alias="fit-width">resources/icons/fit-width.png</file>
+    <file alias="fit-window">resources/icons/fit-window.png</file>
+    <file alias="undo">resources/icons/undo.png</file>
+    <file alias="hide">resources/icons/eye.png</file>
+    <file alias="quit">resources/icons/quit.png</file>
+    <file alias="copy">resources/icons/copy.png</file>
+    <file alias="edit">resources/icons/edit.png</file>
+    <file alias="open">resources/icons/open.png</file>
+    <file alias="save">resources/icons/save.png</file>
+    <file alias="format_voc">resources/icons/format_voc.png</file>
+    <file alias="format_yolo">resources/icons/format_yolo.png</file>
+    <file alias="format_createml">resources/icons/format_createml.png</file>
+    <file alias="save-as">resources/icons/save-as.png</file>
+    <file alias="color">resources/icons/color.png</file>
+    <file alias="color_line">resources/icons/color_line.png</file>
+    <file alias="zoom">resources/icons/zoom.png</file>
+    <file alias="zoom-in">resources/icons/zoom-in.png</file>
+    <file alias="zoom-out">resources/icons/zoom-out.png</file>
+    <file alias="delete">resources/icons/cancel.png</file>
+    <file alias="next">resources/icons/next.png</file>
+    <file alias="prev">resources/icons/prev.png</file>
+    <file alias="resetall">resources/icons/resetall.png</file>
+    <file alias="verify">resources/icons/verify.png</file>
+    <file alias="strings">resources/strings/strings.properties</file>
+    <file alias="strings-zh-TW">resources/strings/strings-zh-TW.properties</file>
+    <file alias="strings-zh-CN">resources/strings/strings-zh-CN.properties</file>
+    <file alias="strings-ja-JP">resources/strings/strings-ja-JP.properties</file>
+  </qresource>
+  <qresource prefix="icons">
+    <file>assets/activity.svg</file>
+    <file>assets/airplay.svg</file>
+    <file>assets/alert-circle.svg</file>
+    <file>assets/alert-octagon.svg</file>
+    <file>assets/alert-triangle.svg</file>
+    <file>assets/align-center.svg</file>
+    <file>assets/align-justify.svg</file>
+    <file>assets/align-left.svg</file>
+    <file>assets/align-right.svg</file>
+    <file>assets/anchor.svg</file>
+    <file>assets/aperture.svg</file>
+    <file>assets/archive.svg</file>
+    <file>assets/arrow-down.svg</file>
+    <file>assets/arrow-down-circle.svg</file>
+    <file>assets/arrow-down-left.svg</file>
+    <file>assets/arrow-down-right.svg</file>
+    <file>assets/arrow-left.svg</file>
+    <file>assets/arrow-left-circle.svg</file>
+    <file>assets/arrow-right.svg</file>
+    <file>assets/arrow-right-circle.svg</file>
+    <file>assets/arrow-up.svg</file>
+    <file>assets/arrow-up-circle.svg</file>
+    <file>assets/arrow-up-left.svg</file>
+    <file>assets/arrow-up-right.svg</file>
+    <file>assets/at-sign.svg</file>
+    <file>assets/award.svg</file>
+    <file>assets/bar-chart.svg</file>
+    <file>assets/bar-chart-2.svg</file>
+    <file>assets/battery.svg</file>
+    <file>assets/battery-charging.svg</file>
+    <file>assets/bell.svg</file>
+    <file>assets/bell-off.svg</file>
+    <file>assets/bluetooth.svg</file>
+    <file>assets/bold.svg</file>
+    <file>assets/book.svg</file>
+    <file>assets/bookmark.svg</file>
+    <file>assets/book-open.svg</file>
+    <file>assets/box.svg</file>
+    <file>assets/briefcase.svg</file>
+    <file>assets/calendar.svg</file>
+    <file>assets/camera.svg</file>
+    <file>assets/camera-off.svg</file>
+    <file>assets/cast.svg</file>
+    <file>assets/check.svg</file>
+    <file>assets/check-circle.svg</file>
+    <file>assets/check-square.svg</file>
+    <file>assets/chevron-down.svg</file>
+    <file>assets/chevron-left.svg</file>
+    <file>assets/chevron-right.svg</file>
+    <file>assets/chevrons-down.svg</file>
+    <file>assets/chevrons-left.svg</file>
+    <file>assets/chevrons-right.svg</file>
+    <file>assets/chevrons-up.svg</file>
+    <file>assets/chevron-up.svg</file>
+    <file>assets/chrome.svg</file>
+    <file>assets/circle.svg</file>
+    <file>assets/clipboard.svg</file>
+    <file>assets/clock.svg</file>
+    <file>assets/cloud.svg</file>
+    <file>assets/cloud-drizzle.svg</file>
+    <file>assets/cloud-lightning.svg</file>
+    <file>assets/cloud-off.svg</file>
+    <file>assets/cloud-rain.svg</file>
+    <file>assets/cloud-snow.svg</file>
+    <file>assets/code.svg</file>
+    <file>assets/codepen.svg</file>
+    <file>assets/codesandbox.svg</file>
+    <file>assets/coffee.svg</file>
+    <file>assets/columns.svg</file>
+    <file>assets/command.svg</file>
+    <file>assets/compass.svg</file>
+    <file>assets/copy.svg</file>
+    <file>assets/corner-down-left.svg</file>
+    <file>assets/corner-down-right.svg</file>
+    <file>assets/corner-left-down.svg</file>
+    <file>assets/corner-left-up.svg</file>
+    <file>assets/corner-right-down.svg</file>
+    <file>assets/corner-right-up.svg</file>
+    <file>assets/corner-up-left.svg</file>
+    <file>assets/corner-up-right.svg</file>
+    <file>assets/cpu.svg</file>
+    <file>assets/credit-card.svg</file>
+    <file>assets/crop.svg</file>
+    <file>assets/crosshair.svg</file>
+    <file>assets/database.svg</file>
+    <file>assets/delete.svg</file>
+    <file>assets/disc.svg</file>
+    <file>assets/divide.svg</file>
+    <file>assets/divide-circle.svg</file>
+    <file>assets/divide-square.svg</file>
+    <file>assets/dollar-sign.svg</file>
+    <file>assets/download.svg</file>
+    <file>assets/download-cloud.svg</file>
+    <file>assets/dribbble.svg</file>
+    <file>assets/droplet.svg</file>
+    <file>assets/edit.svg</file>
+    <file>assets/edit-2.svg</file>
+    <file>assets/edit-3.svg</file>
+    <file>assets/external-link.svg</file>
+    <file>assets/eye.svg</file>
+    <file>assets/eye-off.svg</file>
+    <file>assets/facebook.svg</file>
+    <file>assets/fast-forward.svg</file>
+    <file>assets/feather.svg</file>
+    <file>assets/figma.svg</file>
+    <file>assets/file.svg</file>
+    <file>assets/file-minus.svg</file>
+    <file>assets/file-plus.svg</file>
+    <file>assets/file-text.svg</file>
+    <file>assets/film.svg</file>
+    <file>assets/filter.svg</file>
+    <file>assets/flag.svg</file>
+    <file>assets/folder.svg</file>
+    <file>assets/folder-minus.svg</file>
+    <file>assets/folder-plus.svg</file>
+    <file>assets/framer.svg</file>
+    <file>assets/frown.svg</file>
+    <file>assets/gift.svg</file>
+    <file>assets/git-branch.svg</file>
+    <file>assets/git-commit.svg</file>
+    <file>assets/github.svg</file>
+    <file>assets/gitlab.svg</file>
+    <file>assets/git-merge.svg</file>
+    <file>assets/git-pull-request.svg</file>
+    <file>assets/globe.svg</file>
+    <file>assets/grid.svg</file>
+    <file>assets/hard-drive.svg</file>
+    <file>assets/hash.svg</file>
+    <file>assets/headphones.svg</file>
+    <file>assets/heart.svg</file>
+    <file>assets/help-circle.svg</file>
+    <file>assets/hexagon.svg</file>
+    <file>assets/home.svg</file>
+    <file>assets/image.svg</file>
+    <file>assets/inbox.svg</file>
+    <file>assets/info.svg</file>
+    <file>assets/instagram.svg</file>
+    <file>assets/italic.svg</file>
+    <file>assets/key.svg</file>
+    <file>assets/layers.svg</file>
+    <file>assets/layout.svg</file>
+    <file>assets/life-buoy.svg</file>
+    <file>assets/link.svg</file>
+    <file>assets/link-2.svg</file>
+    <file>assets/linkedin.svg</file>
+    <file>assets/list.svg</file>
+    <file>assets/loader.svg</file>
+    <file>assets/lock.svg</file>
+    <file>assets/log-in.svg</file>
+    <file>assets/log-out.svg</file>
+    <file>assets/mail.svg</file>
+    <file>assets/map.svg</file>
+    <file>assets/map-pin.svg</file>
+    <file>assets/maximize.svg</file>
+    <file>assets/maximize-2.svg</file>
+    <file>assets/meh.svg</file>
+    <file>assets/menu.svg</file>
+    <file>assets/message-circle.svg</file>
+    <file>assets/message-square.svg</file>
+    <file>assets/mic.svg</file>
+    <file>assets/mic-off.svg</file>
+    <file>assets/minimize.svg</file>
+    <file>assets/minimize-2.svg</file>
+    <file>assets/minus.svg</file>
+    <file>assets/minus-circle.svg</file>
+    <file>assets/minus-square.svg</file>
+    <file>assets/monitor.svg</file>
+    <file>assets/moon.svg</file>
+    <file>assets/more-horizontal.svg</file>
+    <file>assets/more-vertical.svg</file>
+    <file>assets/mouse-pointer.svg</file>
+    <file>assets/move.svg</file>
+    <file>assets/music.svg</file>
+    <file>assets/navigation.svg</file>
+    <file>assets/navigation-2.svg</file>
+    <file>assets/octagon.svg</file>
+    <file>assets/package.svg</file>
+    <file>assets/paperclip.svg</file>
+    <file>assets/pause.svg</file>
+    <file>assets/pause-circle.svg</file>
+    <file>assets/pen-tool.svg</file>
+    <file>assets/percent.svg</file>
+    <file>assets/phone.svg</file>
+    <file>assets/phone-call.svg</file>
+    <file>assets/phone-forwarded.svg</file>
+    <file>assets/phone-incoming.svg</file>
+    <file>assets/phone-missed.svg</file>
+    <file>assets/phone-off.svg</file>
+    <file>assets/phone-outgoing.svg</file>
+    <file>assets/pie-chart.svg</file>
+    <file>assets/play.svg</file>
+    <file>assets/play-circle.svg</file>
+    <file>assets/plus.svg</file>
+    <file>assets/plus-circle.svg</file>
+    <file>assets/plus-square.svg</file>
+    <file>assets/pocket.svg</file>
+    <file>assets/power.svg</file>
+    <file>assets/printer.svg</file>
+    <file>assets/radio.svg</file>
+    <file>assets/refresh-ccw.svg</file>
+    <file>assets/refresh-cw.svg</file>
+    <file>assets/repeat.svg</file>
+    <file>assets/rewind.svg</file>
+    <file>assets/rotate-ccw.svg</file>
+    <file>assets/rotate-cw.svg</file>
+    <file>assets/rss.svg</file>
+    <file>assets/save.svg</file>
+    <file>assets/scissors.svg</file>
+    <file>assets/search.svg</file>
+    <file>assets/send.svg</file>
+    <file>assets/server.svg</file>
+    <file>assets/settings.svg</file>
+    <file>assets/share.svg</file>
+    <file>assets/share-2.svg</file>
+    <file>assets/shield.svg</file>
+    <file>assets/shield-off.svg</file>
+    <file>assets/shopping-bag.svg</file>
+    <file>assets/shopping-cart.svg</file>
+    <file>assets/shuffle.svg</file>
+    <file>assets/sidebar.svg</file>
+    <file>assets/skip-back.svg</file>
+    <file>assets/skip-forward.svg</file>
+    <file>assets/slack.svg</file>
+    <file>assets/slash.svg</file>
+    <file>assets/sliders.svg</file>
+    <file>assets/smartphone.svg</file>
+    <file>assets/smile.svg</file>
+    <file>assets/speaker.svg</file>
+    <file>assets/square.svg</file>
+    <file>assets/star.svg</file>
+    <file>assets/stop-circle.svg</file>
+    <file>assets/sun.svg</file>
+    <file>assets/sunrise.svg</file>
+    <file>assets/sunset.svg</file>
+    <file>assets/tablet.svg</file>
+    <file>assets/tag.svg</file>
+    <file>assets/target.svg</file>
+    <file>assets/terminal.svg</file>
+    <file>assets/thermometer.svg</file>
+    <file>assets/thumbs-down.svg</file>
+    <file>assets/thumbs-up.svg</file>
+    <file>assets/toggle-left.svg</file>
+    <file>assets/toggle-right.svg</file>
+    <file>assets/tool.svg</file>
+    <file>assets/trash.svg</file>
+    <file>assets/trash-2.svg</file>
+    <file>assets/trello.svg</file>
+    <file>assets/trending-down.svg</file>
+    <file>assets/trending-up.svg</file>
+    <file>assets/triangle.svg</file>
+    <file>assets/truck.svg</file>
+    <file>assets/tv.svg</file>
+    <file>assets/twitch.svg</file>
+    <file>assets/twitter.svg</file>
+    <file>assets/type.svg</file>
+    <file>assets/umbrella.svg</file>
+    <file>assets/underline.svg</file>
+    <file>assets/unlock.svg</file>
+    <file>assets/upload.svg</file>
+    <file>assets/upload-cloud.svg</file>
+    <file>assets/user.svg</file>
+    <file>assets/user-check.svg</file>
+    <file>assets/user-minus.svg</file>
+    <file>assets/user-plus.svg</file>
+    <file>assets/users.svg</file>
+    <file>assets/user-x.svg</file>
+    <file>assets/video.svg</file>
+    <file>assets/video-off.svg</file>
+    <file>assets/voicemail.svg</file>
+    <file>assets/volume.svg</file>
+    <file>assets/volume-1.svg</file>
+    <file>assets/volume-2.svg</file>
+    <file>assets/volume-x.svg</file>
+    <file>assets/watch.svg</file>
+    <file>assets/wifi.svg</file>
+    <file>assets/wifi-off.svg</file>
+    <file>assets/wind.svg</file>
+    <file>assets/x.svg</file>
+    <file>assets/x-circle.svg</file>
+    <file>assets/x-octagon.svg</file>
+    <file>assets/x-square.svg</file>
+    <file>assets/youtube.svg</file>
+    <file>assets/zap.svg</file>
+    <file>assets/zap-off.svg</file>
+    <file>assets/zoom-in.svg</file>
+    <file>assets/zoom-out.svg</file>
+  </qresource>
 </RCC>

@@ -2,6 +2,7 @@ from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot, QRunnable
 # traceback
 import traceback
 import sys
+import json
 
 class WorkerSignals(QObject):
     '''
@@ -9,7 +10,7 @@ class WorkerSignals(QObject):
     '''
     finished = pyqtSignal()
     error = pyqtSignal(tuple)
-    result = pyqtSignal(object)
+    result = pyqtSignal(str)
 
 class Worker(QRunnable):
     '''
@@ -37,6 +38,6 @@ class Worker(QRunnable):
             exctype, value = sys.exc_info()[:2]
             self.signals.error.emit((exctype, value, traceback.format_exc()))
         else:
-            self.signals.result.emit(result)
+            self.signals.result.emit(json.dumps(result))  # Return the result of the processing
         finally:
             self.signals.finished.emit()

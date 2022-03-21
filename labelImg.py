@@ -14,6 +14,8 @@ import requests
 import tempfile
 from pathlib import Path
 from functools import partial
+import zipfile
+import json
 
 try:
     from PyQt5.QtGui import *
@@ -56,12 +58,19 @@ from thread_worker import Worker, WorkerSignals
 
 __appname__ = 'labelImg'
 
+server_url = "http://127.0.0.1:8000"
+project_id = 1
+
 temp_dir = tempfile.mkdtemp(prefix=__appname__ + '-', suffix='-tmp')
 temp_annotation_dir = tempfile.mkdtemp(prefix=__appname__ + 'annotations-', suffix='-tmp')
 print(temp_dir)
 print(temp_annotation_dir)
 atexit.register(lambda: shutil.rmtree(temp_dir))
 atexit.register(partial(shutil.rmtree, temp_annotation_dir))
+atexit.register(partial(os.remove, temp_dir))
+atexit.register(partial(os.remove, temp_annotation_dir))
+#atexit.register(lambda: send_label_to_server(temp_annotation_dir, server_url))
+access_token = requests.post(server_url + "/auth/token", data={"username": "johndoe", "password": "hello"}).json()["access_token"]
 
 class WindowMixin(object):
 
@@ -85,7 +94,7 @@ class WindowMixin(object):
 class MainWindow(QMainWindow, WindowMixin):
     FIT_WINDOW, FIT_WIDTH, MANUAL_ZOOM = list(range(3))
 
-    def __init__(self, default_filename=None, default_prefdef_class_file=None, default_save_dir=None):
+    def __init__(self, default_filename=None, default_prefdef_class_file=None, default_save_dir=None, access_token=None):
         super(MainWindow, self).__init__()
         self.setWindowTitle(__appname__)
 
@@ -95,6 +104,7 @@ class MainWindow(QMainWindow, WindowMixin):
         settings = self.settings
         self.temp_dir = temp_dir
         self.temp_annotation_dir = temp_annotation_dir
+        self.headers = {"Authorization": "Bearer " + access_token}
 
         self.os_name = platform.system()
 
@@ -103,7 +113,7 @@ class MainWindow(QMainWindow, WindowMixin):
         get_str = lambda str_id: self.string_bundle.get_string(str_id)
 
         # Save as Pascal voc xml
-        self.default_save_dir = default_save_dir
+        self.default_save_dir = temp_annotation_dir
         self.label_file_format = settings.get(SETTING_LABEL_FILE_FORMAT, LabelFileFormat.PASCAL_VOC)
 
         # For loading all image under a directory
@@ -760,26 +770,40 @@ class MainWindow(QMainWindow, WindowMixin):
         args = list(args)
         if len(args) == 1:
             image_id = args[0]
+            filename = self.m_img_list[image_id].split('/')[-1]
             if image_id in self.processed_images_id:
                 return self.get_file_by_name(image_id)
-            image = requests.get(self.image_url + "/" + str(image_id))
-            self.create_temp_file(image_id, image.content)
+            image = requests.get(f"{server_url}/images/{project_id}/{image_id}",headers=self.headers)
+            self.annotations_done_list = list(self.total_annotations_done.values())
+            for i,annotation_done in enumerate(self.annotations_done_list):
+                print(i,annotation_done)
+                if annotation_done.split('.')[0] == filename.split('.')[0]:
+                    print("annotation_done:",annotation_done)
+                    label = requests.get(f"{server_url}/images/annotations/{project_id}/{i}",headers=self.headers)
+                    label_filename = self.annotations_done_list[i]
+                    create_annotation_file = self.create_temp_file(self.temp_annotation_dir,
+                                                                   label.content,
+                                                                   label_filename)
+            self.file_path = self.create_temp_file(self.temp_dir,image.content,filename)
             self.processed_images_id.append(image_id)
-            return image.content
+            return self.file_path
 
-    def create_temp_file(self, image_id, data):
-        self.temp_dir = Path(self.temp_dir)
-        filename = self.m_img_list[image_id].split('/')[-1]
-        full_path = self.temp_dir / filename
+    def get_labels_from_server(self, *args, **kwargs):
+        print("get_labels_from_server")
+        args = list(args)
+
+
+    def create_temp_file(self,temp_dir, data, filename):
+        full_path = os.path.join(temp_dir, filename)
         with open(full_path, 'wb') as f:
             f.write(data)
+        return full_path
 
     def get_file_by_name(self,image_id):
         filename = self.m_img_list[image_id].split('/')[-1]
-        full_path = self.temp_dir / filename
-        with open(full_path, 'rb') as f:
-            file_content = f.read()
-            return file_content
+        full_path = os.path.join(self.temp_dir, filename)
+        self.file_path = full_path
+        return self.file_path
 
 
     def emitter_object(self, image_id):
@@ -788,8 +812,8 @@ class MainWindow(QMainWindow, WindowMixin):
         self.threadpool = QThreadPool()
         self.threadpool.start(self.emitter)
 
-    def set_image_canvas(self, content):
-        self.fill_canvas_with_image_bytes(content)
+    def set_image_canvas(self,file_path):
+        self.fill_canvas_with_image_bytes(file_path)
 
     # Tzutalin 20160906 : Add file list and dock to move faster
     def file_item_double_clicked(self, item=None):
@@ -801,16 +825,18 @@ class MainWindow(QMainWindow, WindowMixin):
         #    self.load_file(filename)
         #self.fill_canvas_with_image_bytes(image)
 
-    def fill_canvas_with_image_bytes(self, image):
-        self.reset_state()
-        self.image = QPixmap()
-        self.image.loadFromData(image)
-        # set qpix size
-        self.canvas.load_pixmap(self.image)
-        self.canvas.setEnabled(True)
-        self.adjust_scale(initial=True)
-        self.add_recent_file(self.file_path)
-        self.toggle_actions(True)
+    def fill_canvas_with_image_bytes(self,file_name):
+        self.file_path = file_name
+        self.load_file(self.file_path)
+        #self.reset_state()
+        #self.image = QPixmap()
+        #self.image.loadFromData(image)
+        ## set qpix size
+        #self.canvas.load_pixmap(self.image)
+        #self.canvas.setEnabled(True)
+        #self.adjust_scale(initial=True)
+        #self.add_recent_file(self.file_path)
+        #self.toggle_actions(True)
 
 
     # Add chris
@@ -938,6 +964,7 @@ class MainWindow(QMainWindow, WindowMixin):
 
         shapes = [format_shape(shape) for shape in self.canvas.shapes]
         # Can add different annotation formats here
+        print("file_path",self.file_path)
         try:
             if self.label_file_format == LabelFileFormat.PASCAL_VOC:
                 if annotation_file_path[-4:].lower() != ".xml":
@@ -958,8 +985,11 @@ class MainWindow(QMainWindow, WindowMixin):
                 self.label_file.save(annotation_file_path, shapes, self.file_path, self.image_data,
                                      self.line_color.getRgb(), self.fill_color.getRgb())
             print('Image:{0} -> Annotation:{1}'.format(self.file_path, annotation_file_path))
+            self.annotation_file_path = annotation_file_path
+            print("annotation_file_path", self.annotation_file_path)
             return True
         except LabelFileError as e:
+            self.annotation_file_path = annotation_file_path
             self.error_message(u'Error saving label data', u'<b>%s</b>' % e)
             return False
 
@@ -1126,6 +1156,7 @@ class MainWindow(QMainWindow, WindowMixin):
 
     def load_file(self, file_path=None):
         """Load the specified file, or the last opened file if None."""
+        print("loading Image")
         self.reset_state()
         self.canvas.setEnabled(False)
         if file_path is None:
@@ -1136,7 +1167,8 @@ class MainWindow(QMainWindow, WindowMixin):
 
         # Fix bug: An  index error after select a directory when open a new file.
         unicode_file_path = ustr(file_path)
-        unicode_file_path = os.path.abspath(unicode_file_path)
+        print(unicode_file_path)
+        #unicode_file_path = os.path.abspath(unicode_file_path)
         # Tzutalin 20160906 : Add file list and dock to move faster
         # Highlight the file item
         if unicode_file_path and self.file_list_widget.count() > 0:
@@ -1149,7 +1181,7 @@ class MainWindow(QMainWindow, WindowMixin):
                 #self.file_list_widget.clear()
                 #self.m_img_list.clear()
 
-        if unicode_file_path and os.path.exists(unicode_file_path):
+        if os.path.exists(unicode_file_path):
             if LabelFile.is_label_file(unicode_file_path):
                 try:
                     self.label_file = LabelFile(unicode_file_path)
@@ -1170,19 +1202,24 @@ class MainWindow(QMainWindow, WindowMixin):
                 self.image_data = read(unicode_file_path, None)
                 self.label_file = None
                 self.canvas.verified = False
+            print(file_path)
 
             if isinstance(self.image_data, QImage):
                 image = self.image_data
+                print(image)
             else:
                 image = QImage.fromData(self.image_data)
+                print("image",image)
             if image.isNull():
                 self.error_message(u'Error opening file',
                                    u"<p>Make sure <i>%s</i> is a valid image file." % unicode_file_path)
                 self.status("Error reading %s" % unicode_file_path)
+                print("returning")
                 return False
             self.status("Loaded %s" % os.path.basename(unicode_file_path))
             self.image = image
             self.file_path = unicode_file_path
+            print(self.file_path)
             self.canvas.load_pixmap(QPixmap.fromImage(image))
             if self.label_file:
                 self.load_labels(self.label_file.shapes)
@@ -1192,7 +1229,11 @@ class MainWindow(QMainWindow, WindowMixin):
             self.paint_canvas()
             self.add_recent_file(self.file_path)
             self.toggle_actions(True)
-            self.show_bounding_box_from_annotation_file(file_path)
+            print("loading Label")
+            label_file = file_path.split('/')[-1]
+            full_label_path = os.path.join(self.temp_annotation_dir, label_file)
+            print(full_label_path)
+            self.show_bounding_box_from_annotation_file(full_label_path)
 
             counter = self.counter_str()
             self.setWindowTitle(__appname__ + ' ' + file_path + ' ' + counter)
@@ -1375,11 +1416,13 @@ class MainWindow(QMainWindow, WindowMixin):
         self.import_dir_images(target_dir_path)
 
     def import_dir_images(self, dir_path):
-        self.image_url = "http://localhost:8000/images"
+        self.image_url = f"{server_url}/images/{project_id}"
+        print(self.image_url)
         try:
-            get_image_list = requests.get(self.image_url)
+            get_image_list = requests.get(self.image_url, headers = self.headers)
             self.image_dict = get_image_list.json()
-            self.m_img_list = list(self.image_dict.values())
+            self.m_img_list = list(self.image_dict["images"].values())
+            self.total_annotations_done = self.image_dict["total_annotations_done"]
         except Exception as e:
             print(e)
             self.m_img_list = []
@@ -1428,14 +1471,14 @@ class MainWindow(QMainWindow, WindowMixin):
                 self.change_save_dir_dialog()
                 return
 
-        #if not self.may_continue():
-        #    return
+        if not self.may_continue():
+            return
 
         if self.img_count <= 0:
             return
 
-        #if self.file_path is None:
-        #    return
+        if self.file_path is None:
+            return
 
         if self.cur_img_idx - 1 >= 0:
             self.cur_img_idx -= 1
@@ -1444,22 +1487,23 @@ class MainWindow(QMainWindow, WindowMixin):
     def open_next_image(self, _value=False):
         # Proceeding next image without dialog if having any label
         print("open_next_image")
+        print(self.img_count)
         if self.auto_saving.isChecked():
             if self.default_save_dir is not None:
                 if self.dirty is True:
                     self.save_file()
-        #    else:
-        #        self.change_save_dir_dialog()
-        #        return
+            #else:
+            #    self.change_save_dir_dialog()
+            #    return
 
         #if not self.may_continue():
         #    return
 
         #if self.img_count <= 0:
         #    return
-        #
-        #if not self.m_img_list:
-        #    return
+        
+        if not self.m_img_list:
+            return
 
         #filename = None
         #if self.file_path is None:
@@ -1533,6 +1577,32 @@ class MainWindow(QMainWindow, WindowMixin):
             self.set_clean()
             self.statusBar().showMessage('Saved to  %s' % annotation_file_path)
             self.statusBar().show()
+            self.send_emitter_object(self.annotation_file_path)
+
+    def send_to_server(self, *args,**kwargs):
+        print("send_to_server")
+        print(args)
+        arg = list(args)[0]
+        if arg:
+            try:
+                send_annotation_url = f"{server_url}/images/annotations/{project_id}"
+                print("send_annotation_url: ", send_annotation_url)
+                files = {'file': open(arg, 'rb')}
+                r = requests.post(send_annotation_url, files=files, headers = self.headers)
+                print("response: ", r.text)
+            except Exception as e:
+                print(e)
+                pass
+
+    def send_emitter_object(self, annotation_file_path):
+        if annotation_file_path:
+            try:
+                self.emitter_2 = Worker(self.send_to_server, annotation_file_path)
+                self.threadpool_2 = QThreadPool()
+                self.threadpool_2.start(self.emitter_2)
+            except Exception as e:
+                print(e)
+                pass
 
     def close_file(self, _value=False):
         if not self.may_continue():
@@ -1705,7 +1775,7 @@ def read(filename, default=None):
         return default
 
 
-def get_main_app(app,argv=None):
+def get_main_app(app,access_token=None,argv=None):
     """
     Standard boilerplate Qt application code.
     Do everything but app.exec_() -- so that we can test the application in one thread
@@ -1732,14 +1802,54 @@ def get_main_app(app,argv=None):
     # Usage : labelImg.py image classFile saveDir
     win = MainWindow(args.image_dir,
                      args.class_file,
-                     args.save_dir)
+                     args.save_dir,access_token)
     win.show()
     return app, win
 
 
-def main(app):
+def create_zip_folder(zip_file_path, folder_path):
+    if os.path.isfile(zip_file_path) is True:
+        os.remove(zip_file_path)
+    if os.path.isdir(folder_path) is False:
+        return
+    zip_file = zipfile.ZipFile(zip_file_path, 'w', zipfile.ZIP_DEFLATED)
+    # get current folder
+    current_folder = os.getcwd()
+    os.chdir(folder_path)
+    for root, dirs, files in os.walk(folder_path):
+        for file in files:
+            if file != "label.zip":
+                zip_file.write(file)
+    zip_file.close()
+    os.chdir(current_folder)
+    return zip_file
+
+def send_label_to_server(label_folder_path, server_url):
+    # content type zip
+    headers = {'Content-Type': 'application/zip'}
+    # get all files in label_folder_path
+    zipfile_name = os.path.join(label_folder_path, 'label.zip')
+    zip_file = create_zip_folder(zipfile_name,label_folder_path)
+    to_send_zip_file = open(zipfile_name, 'rb')
+    print("Zip file created : " + zipfile_name)
+    # send to server
+    post_url = server_url + '/images/annotation/1'
+    try:
+        files = {'file': to_send_zip_file}
+        r = requests.post(post_url, files =files, headers=headers)
+        to_send_zip_file.close()
+        print(r.text)
+    except Exception as e:
+        print(e)
+        return False
+    shutil.rmtree(label_folder_path)
+    return True
+
+
+def main(app, project_id=None, argv=None):
     """construct main app and run it"""
-    app, _win = get_main_app(app,sys.argv)
+    print("main", project_id)
+    app, _win = get_main_app(app, access_token, sys.argv)
 
 if __name__ == '__main__':
     main(QApplication(sys.argv))
