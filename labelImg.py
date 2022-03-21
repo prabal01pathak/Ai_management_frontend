@@ -67,8 +67,6 @@ print(temp_dir)
 print(temp_annotation_dir)
 atexit.register(lambda: shutil.rmtree(temp_dir))
 atexit.register(partial(shutil.rmtree, temp_annotation_dir))
-atexit.register(partial(os.remove, temp_dir))
-atexit.register(partial(os.remove, temp_annotation_dir))
 #atexit.register(lambda: send_label_to_server(temp_annotation_dir, server_url))
 access_token = requests.post(server_url + "/auth/token", data={"username": "johndoe", "password": "hello"}).json()["access_token"]
 
@@ -1163,12 +1161,15 @@ class MainWindow(QMainWindow, WindowMixin):
             file_path = self.settings.get(SETTING_FILENAME)
 
         # Make sure that filePath is a regular python string, rather than QString
-        file_path = ustr(file_path)
+        #file_path = Path(file_path)
+        file_path = file_path
+        print("print if path exist:",os.path.exists(file_path))
 
         # Fix bug: An  index error after select a directory when open a new file.
-        unicode_file_path = ustr(file_path)
+        unicode_file_path = file_path
         print(unicode_file_path)
         #unicode_file_path = os.path.abspath(unicode_file_path)
+        print(unicode_file_path)
         # Tzutalin 20160906 : Add file list and dock to move faster
         # Highlight the file item
         if unicode_file_path and self.file_list_widget.count() > 0:
