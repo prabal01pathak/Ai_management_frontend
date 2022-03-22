@@ -1,5 +1,6 @@
 <RCC>
   <qresource>
+    <file>assets/background_image.jpg</file>
     <file alias="help">resources/icons/help.png</file>
     <file alias="app">resources/icons/app.png</file>
     <file alias="expert">resources/icons/expert2.png</file>

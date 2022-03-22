@@ -10,11 +10,14 @@ import sys
 from labelImg import main
 import requests
 import json
+import time
 from thread_worker import Worker
 import os
 from frames_collection.dashboard import MainWindow
 
 server_url = "http://localhost:8000"
+image_path = "./assets/background_image.jpg"
+path = os.path.abspath(image_path)
 
 class LoginWindow(QMainWindow):
     def __init__(self):
@@ -25,6 +28,9 @@ class LoginWindow(QMainWindow):
         self.server_url = server_url
         self.threadpool = QtCore.QThreadPool()
         self.passwordLineEdit.setEchoMode(QLineEdit.Password)
+        #self.centralwidget.setStyleSheet("#centralwidget{background-image: url(C:/Users/hp/ai_managementLabeling/assets/background_image.jpg);}")
+        #self.centralWidget.addStyleSheet("#centralwidget{background-image: url(C:/Users/hp/ai_managementLabeling/assets/background_image.jpg);}")
+        #MainWindow.setStyleSheet("background-image: url(:/assets/background_image.jpg)")
 
     def login_user(self, *args, **kwargs):
         username = self.usernameLineEdit.text()

@@ -32,12 +32,10 @@ class Worker(QRunnable):
         '''
         print('run')
         try:
+            print('run try')
             result = self.fn(*self.args, **self.kwargs)
-        except:
-            traceback.print_exc()
-            exctype, value = sys.exc_info()[:2]
-            self.signals.error.emit((exctype, value, traceback.format_exc()))
-        else:
             self.signals.result.emit(str(result))  # Return the result of the processing
+        except Exception as e:
+            print("Run error: {}".format(e))
         finally:
             self.signals.finished.emit()

@@ -59,16 +59,13 @@ from thread_worker import Worker, WorkerSignals
 __appname__ = 'labelImg'
 
 server_url = "http://127.0.0.1:8000"
-project_id = 1
 
 temp_dir = tempfile.mkdtemp(prefix=__appname__ + '-', suffix='-tmp')
 temp_annotation_dir = tempfile.mkdtemp(prefix=__appname__ + 'annotations-', suffix='-tmp')
-print(temp_dir)
-print(temp_annotation_dir)
 atexit.register(lambda: shutil.rmtree(temp_dir))
 atexit.register(partial(shutil.rmtree, temp_annotation_dir))
-#atexit.register(lambda: send_label_to_server(temp_annotation_dir, server_url))
-access_token = requests.post(server_url + "/auth/token", data={"username": "johndoe", "password": "hello"}).json()["access_token"]
+print(temp_dir)
+print(temp_annotation_dir)
 
 class WindowMixin(object):
 
@@ -92,7 +89,7 @@ class WindowMixin(object):
 class MainWindow(QMainWindow, WindowMixin):
     FIT_WINDOW, FIT_WIDTH, MANUAL_ZOOM = list(range(3))
 
-    def __init__(self, default_filename=None, default_prefdef_class_file=None, default_save_dir=None, access_token=None):
+    def __init__(self, default_filename=None, default_prefdef_class_file=None, default_save_dir=None, access_token=None, project_id=None):
         super(MainWindow, self).__init__()
         self.setWindowTitle(__appname__)
 
@@ -103,7 +100,7 @@ class MainWindow(QMainWindow, WindowMixin):
         self.temp_dir = temp_dir
         self.temp_annotation_dir = temp_annotation_dir
         self.headers = {"Authorization": "Bearer " + access_token}
-
+        self.project_id = project_id
         self.os_name = platform.system()
 
         # Load string bundle for i18n
@@ -771,13 +768,13 @@ class MainWindow(QMainWindow, WindowMixin):
             filename = self.m_img_list[image_id].split('/')[-1]
             if image_id in self.processed_images_id:
                 return self.get_file_by_name(image_id)
-            image = requests.get(f"{server_url}/images/{project_id}/{image_id}",headers=self.headers)
+            image = requests.get(f"{server_url}/images/{self.project_id}/{image_id}",headers=self.headers)
             self.annotations_done_list = list(self.total_annotations_done.values())
             for i,annotation_done in enumerate(self.annotations_done_list):
                 print(i,annotation_done)
                 if annotation_done.split('.')[0] == filename.split('.')[0]:
                     print("annotation_done:",annotation_done)
-                    label = requests.get(f"{server_url}/images/annotations/{project_id}/{i}",headers=self.headers)
+                    label = requests.get(f"{server_url}/images/annotations/{self.project_id}/{i}",headers=self.headers)
                     label_filename = self.annotations_done_list[i]
                     create_annotation_file = self.create_temp_file(self.temp_annotation_dir,
                                                                    label.content,
@@ -1417,7 +1414,7 @@ class MainWindow(QMainWindow, WindowMixin):
         self.import_dir_images(target_dir_path)
 
     def import_dir_images(self, dir_path):
-        self.image_url = f"{server_url}/images/{project_id}"
+        self.image_url = f"{server_url}/images/{self.project_id}"
         print(self.image_url)
         try:
             get_image_list = requests.get(self.image_url, headers = self.headers)
@@ -1586,7 +1583,7 @@ class MainWindow(QMainWindow, WindowMixin):
         arg = list(args)[0]
         if arg:
             try:
-                send_annotation_url = f"{server_url}/images/annotations/{project_id}"
+                send_annotation_url = f"{server_url}/images/annotations/{self.project_id}"
                 print("send_annotation_url: ", send_annotation_url)
                 files = {'file': open(arg, 'rb')}
                 r = requests.post(send_annotation_url, files=files, headers = self.headers)
@@ -1776,7 +1773,7 @@ def read(filename, default=None):
         return default
 
 
-def get_main_app(app,access_token=None,argv=None):
+def get_main_app(app,access_token=None,project_id=None,argv=None):
     """
     Standard boilerplate Qt application code.
     Do everything but app.exec_() -- so that we can test the application in one thread
@@ -1803,7 +1800,8 @@ def get_main_app(app,access_token=None,argv=None):
     # Usage : labelImg.py image classFile saveDir
     win = MainWindow(args.image_dir,
                      args.class_file,
-                     args.save_dir,access_token)
+                     args.save_dir,access_token,
+                     project_id)
     win.show()
     return app, win
 
@@ -1847,10 +1845,10 @@ def send_label_to_server(label_folder_path, server_url):
     return True
 
 
-def main(app, project_id=None, argv=None):
+def main(app, access_token, project_id=None, argv=None):
     """construct main app and run it"""
     print("main", project_id)
-    app, _win = get_main_app(app, access_token, sys.argv)
+    app, _win = get_main_app(app, access_token, project_id,sys.argv)
 
 if __name__ == '__main__':
     main(QApplication(sys.argv))
