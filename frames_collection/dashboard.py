@@ -95,14 +95,14 @@ class MainWindow(QMainWindow):
                 #self.cardWidgetClass.setupUi(self.cardWidget)
                 print(i,j)
                 cardWidget.setGraphicsEffect(self.effect)
-                self.cardLayout.addWidget(cardWidget,i,j, 1, 1)
+                self.scrollAreaLayout.addWidget(cardWidget,i,j, 1, 1)
                 self.available_pushbuttons[key] = cardWidgetClass.viewProjectBtn
                 j += 1
                 if j == 3:
                     j = 0
                     i += 1
-                if i == 3:
-                    break
+                #if i == 3:
+                #    break
             if len(self.available_pushbuttons) > 0:
                 for key, value in self.available_pushbuttons.items():
                     value.clicked.connect(lambda state, key=key: self.show_next_frame(key))
