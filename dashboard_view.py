@@ -43,7 +43,7 @@ class LoginWindow(QMainWindow):
             'Content-Type': 'application/x-www-form-urlencoded'
         }
         try:
-            response = requests.post(self.server_url + '/auth/token', data=form_data, headers=headers)
+            response = requests.post(self.server_url + '/token', data=form_data, headers=headers)
             self.response_json = response.json()
             if response.status_code == 200:
                 self.access_token = self.response_json['access_token']
